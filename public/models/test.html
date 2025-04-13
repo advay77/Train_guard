@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face-API.js Model Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .success {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 5px 0;
+    }
+    .status {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      border-radius: 50%;
+      vertical-align: middle;
+    }
+    .pending {
+      background-color: #ffc107;
+    }
+    .loaded {
+      background-color: #28a745;
+    }
+    .failed {
+      background-color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <h1>Face-API.js Model Test</h1>
+  <p>This page tests whether the face-api.js models are correctly installed in the public/models directory.</p>
+  
+  <button id="test-models">Test Models</button>
+  
+  <div id="result" class="result" style="display: none;"></div>
+  
+  <h2>Models Status</h2>
+  <ul id="models-list">
+    <li><span class="status pending"></span> Face Detection Model (tiny_face_detector)</li>
+    <li><span class="status pending"></span> Face Landmark Model (face_landmark_68)</li>
+    <li><span class="status pending"></span> Face Recognition Model (face_recognition)</li>
+    <li><span class="status pending"></span> Face Expression Model (face_expression)</li>
+  </ul>
+  
+  <script>
+    document.getElementById('test-models').addEventListener('click', async () => {
+      const resultElement = document.getElementById('result');
+      resultElement.style.display = 'block';
+      resultElement.innerHTML = 'Testing models, please wait...';
+      resultElement.className = 'result';
+      
+      const modelsList = document.getElementById('models-list');
+      const statusElements = modelsList.querySelectorAll('.status');
+      statusElements.forEach(el => el.className = 'status pending');
+      
+      try {
+        // Attempt to load each model
+        try {
+          await faceapi.nets.tinyFaceDetector.loadFromUri('./');
+          updateModelStatus(0, 'loaded');
+        } catch (error) {
+          updateModelStatus(0, 'failed');
+          throw new Error(`Failed to load tiny face detector model: ${error.message}`);
+        }
+        
+        try {
+          await faceapi.nets.faceLandmark68Net.loadFromUri('./');
+          updateModelStatus(1, 'loaded');
+        } catch (error) {
+          updateModelStatus(1, 'failed');
+          throw new Error(`Failed to load face landmark model: ${error.message}`);
+        }
+        
+        try {
+          await faceapi.nets.faceRecognitionNet.loadFromUri('./');
+          updateModelStatus(2, 'loaded');
+        } catch (error) {
+          updateModelStatus(2, 'failed');
+          throw new Error(`Failed to load face recognition model: ${error.message}`);
+        }
+        
+        try {
+          await faceapi.nets.faceExpressionNet.loadFromUri('./');
+          updateModelStatus(3, 'loaded');
+        } catch (error) {
+          updateModelStatus(3, 'failed');
+          throw new Error(`Failed to load face expression model: ${error.message}`);
+        }
+        
+        // All models loaded successfully
+        resultElement.className = 'result success';
+        resultElement.innerHTML = `
+          <h3>✅ All models loaded successfully!</h3>
+          <p>The facial recognition system should work correctly. You can return to the main application.</p>
+        `;
+        
+      } catch (error) {
+        resultElement.className = 'result error';
+        resultElement.innerHTML = `
+          <h3>❌ Model loading failed</h3>
+          <p>${error.message}</p>
+          <p>Please make sure you have downloaded all required model files to the public/models directory.</p>
+        `;
+      }
+    });
+    
+    function updateModelStatus(index, status) {
+      const modelsList = document.getElementById('models-list');
+      const statusElements = modelsList.querySelectorAll('.status');
+      statusElements[index].className = `status ${status}`;
+    }
+  </script>
+</body>
+</html> 
