@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -31,16 +30,45 @@ export function BookingPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load form data from localStorage on mount
+  React.useEffect(() => {
+    const savedForm = localStorage.getItem("bookingFormData");
+    if (savedForm) {
+      setFormData(JSON.parse(savedForm));
+    }
+    const savedPhoto = localStorage.getItem("bookingPhotoPreview");
+    if (savedPhoto) {
+      setPhotoPreview(savedPhoto);
+    }
+  }, []);
+
+  // Save form data to localStorage on change
+  React.useEffect(() => {
+    localStorage.setItem("bookingFormData", JSON.stringify(formData));
+  }, [formData]);
+
+  React.useEffect(() => {
+    if (photoPreview) {
+      localStorage.setItem("bookingPhotoPreview", photoPreview);
+    } else {
+      localStorage.removeItem("bookingPhotoPreview");
+    }
+  }, [photoPreview]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    // Prevent changes if locked
+    if (localStorage.getItem("bookingLocked") === "true") return;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
+    if (localStorage.getItem("bookingLocked") === "true") return;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (localStorage.getItem("bookingLocked") === "true") return;
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPhotoFile(file);
@@ -75,6 +103,8 @@ export function BookingPage() {
       
       toast.success("Ticket booked successfully! Check your email for confirmation.");
       setIsSubmitting(false);
+      // Lock the form after successful booking
+      localStorage.setItem("bookingLocked", "true");
       
       // Reset form (in a real app, you might redirect to a confirmation page)
       setFormData({
@@ -91,6 +121,9 @@ export function BookingPage() {
       setPhotoPreview(null);
     }, 1500);
   };
+
+  // Disable all inputs if locked
+  const isLocked = localStorage.getItem("bookingLocked") === "true";
 
   return (
     <div className="space-y-6">
@@ -120,6 +153,7 @@ export function BookingPage() {
                   onChange={handleInputChange}
                   placeholder="John Doe"
                   required
+                  disabled={isLocked}
                 />
               </div>
               
@@ -135,6 +169,7 @@ export function BookingPage() {
                     min="1"
                     max="120"
                     required
+                    disabled={isLocked}
                   />
                 </div>
                 
@@ -143,8 +178,9 @@ export function BookingPage() {
                   <Select 
                     value={formData.gender} 
                     onValueChange={(value) => handleSelectChange("gender", value)}
+                    disabled={isLocked}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger disabled={isLocked}>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
@@ -165,6 +201,7 @@ export function BookingPage() {
                   onChange={handleInputChange}
                   placeholder="Passport or National ID"
                   required
+                  disabled={isLocked}
                 />
               </div>
               
@@ -192,6 +229,7 @@ export function BookingPage() {
                         accept="image/*"
                         className="hidden"
                         onChange={handlePhotoChange}
+                        disabled={isLocked}
                       />
                     </label>
                   </div>
@@ -227,6 +265,7 @@ export function BookingPage() {
                   onChange={handleInputChange}
                   placeholder="Departure Station"
                   required
+                  disabled={isLocked}
                 />
               </div>
               
@@ -239,6 +278,7 @@ export function BookingPage() {
                   onChange={handleInputChange}
                   placeholder="Arrival Station"
                   required
+                  disabled={isLocked}
                 />
               </div>
               
@@ -251,6 +291,7 @@ export function BookingPage() {
                   value={formData.date}
                   onChange={handleInputChange}
                   required
+                  disabled={isLocked}
                 />
               </div>
               
@@ -259,8 +300,9 @@ export function BookingPage() {
                 <Select 
                   value={formData.class} 
                   onValueChange={(value) => handleSelectChange("class", value)}
+                  disabled={isLocked}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger disabled={isLocked}>
                     <SelectValue placeholder="Select Class" />
                   </SelectTrigger>
                   <SelectContent>
@@ -272,8 +314,8 @@ export function BookingPage() {
               </div>
             </CardContent>
             <CardFooter className="px-6 pt-4 border-t">
-              <Button className="w-full" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button className="w-full" type="submit" disabled={isSubmitting || isLocked}>
+                {isLocked ? "Locked" : isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Processing...

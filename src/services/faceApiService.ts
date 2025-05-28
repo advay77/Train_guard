@@ -115,7 +115,7 @@ export class FaceApiService {
   // Update face matcher with current descriptors
   private updateFaceMatcher() {
     // Create labeled face descriptors
-    this.labeledFaceDescriptors = this.faceDescriptors.reduce<{ [key: string]: Float32Array[] }>(
+    const descriptorMap = this.faceDescriptors.reduce<{ [key: string]: Float32Array[] }>(
       (acc, { person, descriptor }) => {
         const id = person.faceId;
         if (!acc[id]) {
@@ -125,7 +125,8 @@ export class FaceApiService {
         return acc;
       },
       {}
-    ).map(([id, descriptors]) => {
+    );
+    this.labeledFaceDescriptors = Object.entries(descriptorMap).map(([id, descriptors]) => {
       const person = this.faceDescriptors.find(d => d.person.faceId === id)?.person;
       return new faceapi.LabeledFaceDescriptors(
         id, 

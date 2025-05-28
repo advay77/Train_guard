@@ -1,4 +1,3 @@
-
 import React from "react";
 import { 
   Card, 
@@ -28,9 +27,9 @@ import {
 } from "lucide-react";
 
 // Mock booking data
-const mockBookings = [
+const availableTickets = [
   {
-    id: "booking-1",
+    id: "ticket-1",
     trainNumber: "Express 2408",
     from: "New Delhi",
     to: "Mumbai Central",
@@ -38,10 +37,10 @@ const mockBookings = [
     departureTime: "08:30 AM",
     class: "First Class",
     seat: "A-12",
-    status: "confirmed"
+    status: "available"
   },
   {
-    id: "booking-2",
+    id: "ticket-2",
     trainNumber: "Shatabdi 12026",
     from: "Bengaluru",
     to: "Chennai",
@@ -49,10 +48,10 @@ const mockBookings = [
     departureTime: "06:15 AM",
     class: "Business",
     seat: "B-07",
-    status: "confirmed"
+    status: "available"
   },
   {
-    id: "booking-3",
+    id: "ticket-3",
     trainNumber: "Rajdhani 12310",
     from: "Kolkata",
     to: "New Delhi",
@@ -60,20 +59,34 @@ const mockBookings = [
     departureTime: "04:45 PM",
     class: "Economy",
     seat: "D-23",
-    status: "waitlisted"
+    status: "available"
   }
 ];
 
 export function ProfilePage() {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = React.useState(false);
-  const [profileData, setProfileData] = React.useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: "+91 98765 43210",
-    address: "123 Railway Colony, New Delhi",
-    idNumber: "ABCDE1234F"
+  const [profileData, setProfileData] = React.useState(() => {
+    // Try to load from localStorage first
+    const saved = localStorage.getItem("profileData");
+    if (saved) return JSON.parse(saved);
+    return {
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: "+91 98765 43210",
+      address: "123 Railway Colony, New Delhi",
+      idNumber: "ABCDE1234F"
+    };
   });
+  const [photoPreview, setPhotoPreview] = React.useState(() => {
+    const saved = localStorage.getItem("profilePhoto");
+    return saved || null;
+  });
+
+  // Save profileData to localStorage on change
+  React.useEffect(() => {
+    localStorage.setItem("profileData", JSON.stringify(profileData));
+  }, [profileData]);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -83,6 +96,21 @@ export function ProfilePage() {
   const handleSaveProfile = () => {
     setIsEditing(false);
     toast.success("Profile updated successfully");
+    // Save to localStorage already handled by useEffect
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setPhotoPreview(event.target.result as string);
+          localStorage.setItem("profilePhoto", event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -114,12 +142,26 @@ export function ProfilePage() {
               </div>
             </CardHeader>
             <CardContent className="flex flex-col items-center text-center space-y-4">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={user?.photoUrl || "/placeholder.svg"} alt={user?.name || "Profile"} />
-                <AvatarFallback>
-                  <UserCircle className="h-12 w-12" />
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={photoPreview || user?.photoUrl || "/placeholder.svg"} alt={user?.name || "Profile"} />
+                  <AvatarFallback>
+                    <UserCircle className="h-12 w-12" />
+                  </AvatarFallback>
+                </Avatar>
+                {isEditing && (
+                  <label htmlFor="profile-photo-upload" className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow cursor-pointer border border-gray-200">
+                    <Input
+                      id="profile-photo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePhotoChange}
+                    />
+                    <Edit className="h-4 w-4 text-gray-600" />
+                  </label>
+                )}
+              </div>
               
               <div>
                 <h3 className="font-medium text-lg">{profileData.name}</h3>
@@ -220,47 +262,41 @@ export function ProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Ticket className="h-5 w-5 mr-2 text-primary" />
-              My Bookings
+              Available Tickets
             </CardTitle>
             <CardDescription>
-              Your upcoming and past train journeys
+              Trains available from your source to destination
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border/50">
-              {mockBookings.map(booking => (
+              {availableTickets.map(ticket => (
                 <div 
-                  key={booking.id}
+                  key={ticket.id}
                   className="p-4 hover:bg-secondary/30 transition-colors"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between mb-3">
                     <div>
                       <h3 className="font-medium flex items-center">
-                        {booking.trainNumber}
-                        {booking.status === "confirmed" ? (
-                          <Badge variant="outline" className="ml-2 text-green-500 border-green-500">
-                            Confirmed
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="ml-2 text-yellow-500 border-yellow-500">
-                            Waitlisted
-                          </Badge>
-                        )}
+                        {ticket.trainNumber}
+                        <Badge variant="outline" className="ml-2 text-blue-500 border-blue-500">
+                          Available
+                        </Badge>
                       </h3>
                       <div className="flex items-center mt-1 text-sm text-muted-foreground">
                         <MapPin className="h-3 w-3 mr-1" />
-                        {booking.from} to {booking.to}
+                        {ticket.from} to {ticket.to}
                       </div>
                     </div>
                     
                     <div className="mt-2 md:mt-0 text-right">
                       <div className="flex items-center md:justify-end text-sm">
                         <CalendarDays className="h-3 w-3 mr-1" />
-                        {booking.departureDate}
+                        {ticket.departureDate}
                       </div>
                       <div className="flex items-center md:justify-end text-sm text-muted-foreground mt-1">
                         <Clock className="h-3 w-3 mr-1" />
-                        {booking.departureTime}
+                        {ticket.departureTime}
                       </div>
                     </div>
                   </div>
@@ -269,20 +305,17 @@ export function ProfilePage() {
                     <div className="flex space-x-4">
                       <div>
                         <span className="text-xs text-muted-foreground">Class</span>
-                        <p className="text-sm">{booking.class}</p>
+                        <p className="text-sm">{ticket.class}</p>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Seat</span>
-                        <p className="text-sm">{booking.seat}</p>
+                        <p className="text-sm">{ticket.seat}</p>
                       </div>
                     </div>
                     
                     <div className="mt-2 md:mt-0 space-x-2">
                       <Button variant="outline" size="sm" className="text-xs">
-                        View E-Ticket
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-xs">
-                        Cancel
+                        Book Now
                       </Button>
                     </div>
                   </div>
