@@ -46,6 +46,85 @@ LOCOFY ensures secure and verified travel with the help of facial recognition an
 
 ---
 
+## 🚀 How to Run the Project
+
+### Prerequisites
+- Node.js (version 16 or higher recommended)
+- npm (comes with Node.js) or yarn
+- For backend: MongoDB (running locally or connection string for remote DB)
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/advay77/Train_guard.git
+cd Train_guard
+```
+
+---
+
+### 2. Install dependencies
+
+#### Frontend
+```bash
+npm install
+# or
+yarn
+```
+
+#### Backend
+```bash
+cd backend
+npm install
+# or
+yarn
+cd ..
+```
+
+---
+
+### 3. Download Face-API.js Models
+The face recognition system requires pre-trained models.
+
+**Option 1: Run the provided script**
+```bash
+npm run download-models
+```
+_Or manually:_
+See `public/models/README.md` for full instructions to download and place models in `public/models`.
+
+---
+
+### 4. Set up Environment Variables
+
+- Backend may need a `.env` file in `backend/` for database connection and secrets.
+- Example:
+  ```
+  MONGODB_URI=mongodb://localhost:27017/your-db
+  JWT_SECRET=your-secret
+  ```
+
+---
+
+### 5. Start the Applications
+
+#### Backend
+```bash
+cd backend
+npm run dev
+# or
+yarn dev
+```
+
+#### Frontend
+Open a new terminal in the root directory:
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+---
+
+
 ## 🔮 Future Expansion
 
 - 🚇 Metro systems  
