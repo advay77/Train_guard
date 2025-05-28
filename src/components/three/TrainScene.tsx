@@ -302,11 +302,15 @@ export function TrainScene() {
 
     // Get coaches data
     const coachesData = getAllCoachesData();
+    // Add more coaches for a longer train
     const coachPositions = [
-      { position: new THREE.Vector3(0, 1, -15), id: coachesData[0].id },
-      { position: new THREE.Vector3(0, 1, -7), id: coachesData[1].id },
-      { position: new THREE.Vector3(0, 1, 1), id: coachesData[2].id },
-      { position: new THREE.Vector3(0, 1, 9), id: coachesData[3].id },
+      { position: new THREE.Vector3(0, 1, -21), id: coachesData[0].id },
+      { position: new THREE.Vector3(0, 1, -14), id: coachesData[1].id },
+      { position: new THREE.Vector3(0, 1, -7), id: coachesData[2].id },
+      { position: new THREE.Vector3(0, 1, 0), id: coachesData[3].id },
+      { position: new THREE.Vector3(0, 1, 7), id: coachesData[0].id + "-2" },
+      { position: new THREE.Vector3(0, 1, 14), id: coachesData[1].id + "-2" },
+      { position: new THREE.Vector3(0, 1, 21), id: coachesData[2].id + "-2" }
     ];
 
     // CSS2DObject for creating HTML labels with better styling
@@ -932,7 +936,8 @@ export function TrainScene() {
     
     // Create train consisting of coaches based on data
     coachPositions.forEach((coachPos, index) => {
-      const coachData = coachesData[index];
+      // Use modulo to cycle through available coach data for extra boxes
+      const coachData = coachesData[index % coachesData.length];
       createTrainCoach(
         coachPos.position, 
         coachData, 
@@ -1183,6 +1188,20 @@ export function TrainScene() {
         animateSmoke();
       }
       
+      // Make the train move forward slightly for a dynamic effect
+      if (sceneRef.current) {
+        sceneRef.current.traverse(obj => {
+          // Only move coach groups, not the scene itself
+          if (obj instanceof THREE.Group && !(obj instanceof THREE.Scene)) {
+            obj.position.z += 0.03; // Increase speed for a faster effect
+            // Loop the coaches for endless effect
+            if (obj.position.z > 25) {
+              obj.position.z = -25;
+            }
+          }
+        });
+      }
+      
       // Update camera position based on view mode
       if (viewMode === "interior" && currentInteriorCoach && coachObjectsRef.current[currentInteriorCoach]) {
         // Move camera inside the coach
@@ -1262,39 +1281,26 @@ export function TrainScene() {
   return (
     <div 
       ref={mountRef} 
-      className="relative h-[60vh] w-full rounded-lg overflow-hidden"
+      className="relative h-[60vh] w-full rounded-lg overflow-hidden bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 border border-blue-900 shadow-xl"
     >
-      {/* View Mode Toggle */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* View Mode Toggle - now a single toggle button */}
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
         <button
-          className={`px-3 py-1 rounded-md text-xs font-medium ${
-            viewMode === "exterior" 
-              ? "bg-primary text-white" 
-              : "bg-gray-700/50 text-gray-200"
-          }`}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400/60
+            ${viewMode === "exterior" ? "bg-blue-700 text-white hover:bg-blue-800" : "bg-gray-200 text-blue-900 hover:bg-blue-300"}
+          `}
           onClick={() => {
-            setViewMode("exterior");
-            setCurrentInteriorCoach(null);
-          }}
-        >
-          Exterior View
-        </button>
-        <span className="mx-1 text-white/60">|</span>
-        <button
-          className={`px-3 py-1 rounded-md text-xs font-medium ${
-            viewMode === "interior" 
-              ? "bg-primary text-white" 
-              : "bg-gray-700/50 text-gray-200"
-          }`}
-          onClick={() => {
-            if (focusedCoach) {
+            if (viewMode === "exterior") {
+              // Instantly switch to interior of first coach
               setViewMode("interior");
-              setCurrentInteriorCoach(focusedCoach);
+              setCurrentInteriorCoach(Object.keys(coachObjectsRef.current)[0] || null);
+            } else {
+              setViewMode("exterior");
+              setCurrentInteriorCoach(null);
             }
           }}
-          disabled={!focusedCoach}
         >
-          Interior View
+          {viewMode === "exterior" ? "View Interior" : "View Exterior"}
         </button>
       </div>
       
