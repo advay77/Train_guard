@@ -21,59 +21,60 @@ export const FacialRecognitionProvider = ({ children }: FacialRecognitionProvide
   const [currentCoachId, setCurrentCoachId] = useState<string | null>(null);
   const recognitionInterval = useRef<number | null>(null);
 
-  // Clean up on unmount
+  // Clean up on unmount and when recognition stops
   useEffect(() => {
     return () => {
       if (recognitionInterval.current) {
         window.clearInterval(recognitionInterval.current);
         recognitionInterval.current = null;
       }
+      setIsRecognizing(false);
+      setCurrentCoachId(null);
     };
   }, []);
 
   const startRecognition = useCallback(async (coachId: string) => {
+    // Prevent multiple intervals
+    if (recognitionInterval.current) {
+      window.clearInterval(recognitionInterval.current);
+      recognitionInterval.current = null;
+    }
     setCurrentCoachId(coachId);
     setIsRecognizing(true);
     toast.info(`Starting facial recognition in coach ${coachId}...`);
 
-    // Initial detection
-    try {
-      // In a real app, we would capture from a camera here
-      const detections = await detectFaces("mock-camera-feed");
-      const recognizedFaces = await recognizeFaces(detections);
-      
+    // Helper to process detections and update security status
+    const processDetections = (recognizedFaces: FaceDetection[]) => {
       setLastDetection(recognizedFaces);
-      
-      // Check for unauthorized entries
+      let unauthorizedFound = false;
       recognizedFaces.forEach(face => {
         if (face.matchedPerson && !face.matchedPerson.isAuthorized) {
+          unauthorizedFound = true;
           generateSecurityAlert(face, coachId);
-          updateCoachSecurityStatus(coachId, true);
         }
       });
+      updateCoachSecurityStatus(coachId, unauthorizedFound);
+    };
+
+    // Initial detection
+    try {
+      const detections = await detectFaces("mock-camera-feed");
+      const recognizedFaces = await recognizeFaces(detections);
+      processDetections(recognizedFaces);
     } catch (error) {
       console.error("Error in facial recognition:", error);
       toast.error("Failed to start facial recognition");
       setIsRecognizing(false);
+      setCurrentCoachId(null);
       return;
     }
 
     // Continue with periodic recognition
     recognitionInterval.current = window.setInterval(async () => {
       try {
-        // In a real app, we would capture from a camera here
         const detections = await detectFaces("mock-camera-feed");
         const recognizedFaces = await recognizeFaces(detections);
-        
-        setLastDetection(recognizedFaces);
-        
-        // Check for unauthorized entries
-        recognizedFaces.forEach(face => {
-          if (face.matchedPerson && !face.matchedPerson.isAuthorized) {
-            generateSecurityAlert(face, coachId);
-            updateCoachSecurityStatus(coachId, true);
-          }
-        });
+        processDetections(recognizedFaces);
       } catch (error) {
         console.error("Error in facial recognition interval:", error);
       }
@@ -85,11 +86,15 @@ export const FacialRecognitionProvider = ({ children }: FacialRecognitionProvide
       window.clearInterval(recognitionInterval.current);
       recognitionInterval.current = null;
     }
-    
+    if (currentCoachId) {
+      // Reset coach security status when stopping recognition
+      updateCoachSecurityStatus(currentCoachId, false);
+    }
     setIsRecognizing(false);
     setCurrentCoachId(null);
+    setLastDetection(null);
     toast.info("Facial recognition stopped");
-  }, []);
+  }, [currentCoachId]);
 
   return (
     <FRContext.Provider
@@ -107,4 +112,4 @@ export const FacialRecognitionProvider = ({ children }: FacialRecognitionProvide
 
 export const useFacialRecognition = () => {
   return useContext(FRContext);
-}; 
+};

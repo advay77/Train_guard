@@ -37,12 +37,13 @@ export function WebcamCapture({
   const [cameraError, setCameraError] = useState<boolean>(false);
   const [availableDevices, setAvailableDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [webcamReady, setWebcamReady] = useState(false);
 
   // Get available camera devices
   const handleDevices = useCallback((mediaDevices: MediaDeviceInfo[]) => {
     const videoDevices = mediaDevices.filter(({ kind }) => kind === 'videoinput');
     setAvailableDevices(videoDevices);
-    
     // Set the first available camera as default if not already set
     if (videoDevices.length > 0 && !selectedDeviceId) {
       setSelectedDeviceId(videoDevices[0].deviceId);
@@ -60,24 +61,45 @@ export function WebcamCapture({
       });
   }, [handleDevices]);
 
-  // Handle camera errors
-  const handleCameraError = useCallback((error: string | DOMException) => {
-    console.error("Webcam error:", error);
-    setCameraError(true);
-    toast.error("Could not access camera. Please check permissions.");
+  // Reset error when switching device
+  useEffect(() => {
+    setCameraError(false);
+  }, [selectedDeviceId]);
+
+  // Mark webcam as ready when video stream is available
+  const handleUserMedia = useCallback(() => {
+    setWebcamReady(true);
   }, []);
 
-  // Capture image from webcam
-  const captureImage = useCallback(() => {
+  // Mark webcam as not ready on error
+  const handleCameraError = useCallback((error: string | DOMException) => {
+    if (!cameraError) {
+      setWebcamReady(false);
+      setCameraError(true);
+      toast.error("Could not access camera. Please check permissions.");
+    }
+  }, [cameraError]);
+
+  // Capture image from webcam, retry up to 3 times if needed
+  const captureImage = useCallback(async () => {
+    if (!webcamReady) {
+      toast.error("Webcam not ready. Please wait a moment.");
+      return;
+    }
     if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
+      let imageSrc = null;
+      for (let i = 0; i < 3; i++) {
+        imageSrc = webcamRef.current.getScreenshot();
+        if (imageSrc) break;
+        await new Promise(res => setTimeout(res, 150));
+      }
       if (imageSrc) {
         setCapturedImage(imageSrc);
       } else {
-        toast.error("Failed to capture image");
+        toast.error("Failed to capture image. Please try again.");
       }
     }
-  }, [webcamRef]);
+  }, [webcamRef, webcamReady]);
 
   // Accept the captured image
   const acceptImage = useCallback(() => {
@@ -98,11 +120,12 @@ export function WebcamCapture({
       toast.info("No other cameras available");
       return;
     }
-    
+    setIsSwitching(true);
     const currentIndex = availableDevices.findIndex(device => device.deviceId === selectedDeviceId);
     const nextIndex = (currentIndex + 1) % availableDevices.length;
     setSelectedDeviceId(availableDevices[nextIndex].deviceId);
-    toast.info("Camera switched");
+    setTimeout(() => setIsSwitching(false), 500);
+    toast.info(`Switched to: ${availableDevices[nextIndex].label || 'Camera ' + (nextIndex + 1)}`);
   }, [availableDevices, selectedDeviceId]);
 
   // Video constraints
@@ -114,16 +137,36 @@ export function WebcamCapture({
   };
 
   return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="p-3">
-        <CardTitle className="text-lg flex items-center">
-          <Camera className="h-5 w-5 mr-2 text-primary" />
+    <Card className={cn("overflow-hidden shadow-lg border-2 border-primary/30", className)}>
+      <CardHeader className="p-3 bg-gradient-to-r from-blue-900/80 to-blue-700/60">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Camera className="h-5 w-5 text-primary" />
           {title}
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="text-blue-100/90">{description}</CardDescription>
       </CardHeader>
-      
-      <CardContent className="p-0 flex justify-center bg-black/5">
+      <CardContent className="p-0 flex flex-col items-center bg-black/10">
+        {/* Camera device selector */}
+        {availableDevices.length > 1 && !capturedImage && !cameraError && (
+          <div className="w-full flex justify-center py-2 gap-2">
+            <select
+              className="rounded border px-2 py-1 text-sm bg-white/80"
+              value={selectedDeviceId}
+              onChange={e => setSelectedDeviceId(e.target.value)}
+              disabled={isSwitching}
+            >
+              {availableDevices.map(device => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Camera ${device.deviceId.slice(-4)}`}
+                </option>
+              ))}
+            </select>
+            <Button variant="outline" size="sm" onClick={switchCamera} disabled={isSwitching}>
+              <RefreshCw className={cn("h-4 w-4 mr-1", isSwitching && "animate-spin")} />
+              Switch
+            </Button>
+          </div>
+        )}
         {cameraError ? (
           <div className="flex items-center justify-center text-center p-8 h-[300px]">
             <div className="text-destructive space-y-2">
@@ -142,9 +185,12 @@ export function WebcamCapture({
             <img 
               src={capturedImage} 
               alt="Captured" 
-              className="object-contain"
+              className="object-contain rounded-lg border border-primary/30 shadow-md"
               style={{ width, height }}
             />
+            <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded shadow">
+              Preview
+            </div>
           </div>
         ) : (
           <div className="relative">
@@ -155,46 +201,40 @@ export function WebcamCapture({
               ref={webcamRef}
               screenshotFormat="image/jpeg"
               videoConstraints={videoConstraints}
+              onUserMedia={handleUserMedia}
               onUserMediaError={handleCameraError}
-              className="object-contain"
+              className="object-contain rounded-lg border border-primary/20 shadow"
               mirrored
             />
             {/* Face position guide overlay */}
-            <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
-              <div className="w-1/2 h-1/2 mx-auto my-auto border-2 border-dashed border-primary/50 rounded-full flex items-center justify-center">
-                <div className="text-xs text-primary/70 text-center px-2">
-                  Center face here
-                </div>
+            <div className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none flex items-center justify-center">
+              <div className="w-2/3 h-2/3 border-4 border-dashed border-primary/60 rounded-full flex items-center justify-center relative">
+                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-primary/80 bg-white/70 px-2 py-0.5 rounded shadow">
+                  Center your face here
+                </span>
               </div>
             </div>
           </div>
         )}
       </CardContent>
-      
       {showControls && (
-        <CardFooter className="flex justify-between p-3 gap-2">
+        <CardFooter className="flex justify-between p-3 gap-2 bg-gradient-to-r from-blue-900/10 to-blue-700/10">
           {capturedImage ? (
             <>
               <Button variant="outline" onClick={retakeImage} className="flex-1">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retake
               </Button>
-              <Button onClick={acceptImage} className="flex-1">
+              <Button onClick={acceptImage} className="flex-1 bg-primary text-white">
                 <Check className="h-4 w-4 mr-2" />
                 Accept
               </Button>
             </>
           ) : (
             <>
-              {availableDevices.length > 1 && (
-                <Button variant="outline" onClick={switchCamera} className="flex-1">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Switch Camera
-                </Button>
-              )}
-              <Button onClick={captureImage} className="flex-1">
+              <Button onClick={captureImage} className="flex-1 bg-primary text-white" disabled={!webcamReady || isSwitching}>
                 <Camera className="h-4 w-4 mr-2" />
-                Capture
+                {webcamReady ? "Capture" : "Loading..."}
               </Button>
             </>
           )}
@@ -202,4 +242,4 @@ export function WebcamCapture({
       )}
     </Card>
   );
-} 
+}

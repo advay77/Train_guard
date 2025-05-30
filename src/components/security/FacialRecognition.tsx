@@ -19,26 +19,26 @@ export function FacialRecognition() {
   const [selectedCoach, setSelectedCoach] = useState<string>("A1");
   const { startRecognition, stopRecognition, isRecognizing, lastDetection } = useFacialRecognition();
   const [processingStatus, setProcessingStatus] = useState<"idle" | "processing" | "complete">("idle");
-  
+
   const coachesData = getAllCoachesData();
-  
+
   // Handle coach selection
   const handleCoachChange = (value: string) => {
     if (isRecognizing) {
       stopRecognition();
+      setProcessingStatus("idle");
     }
     setSelectedCoach(value);
   };
-  
+
   // Start recognition for the selected coach
   const handleStartRecognition = async () => {
-    if (!selectedCoach) return;
-    
+    if (!selectedCoach || isRecognizing) return;
     setProcessingStatus("processing");
     await startRecognition(selectedCoach);
     setFacialRecognitionActive(selectedCoach, true);
   };
-  
+
   // Stop recognition
   const handleStopRecognition = () => {
     stopRecognition();
@@ -47,33 +47,36 @@ export function FacialRecognition() {
     }
     setProcessingStatus("idle");
   };
-  
+
+  // Reset state if coach changes while recognizing
+  useEffect(() => {
+    setProcessingStatus(isRecognizing ? "processing" : "idle");
+  }, [selectedCoach, isRecognizing]);
+
   // Set processing status based on new detections
   useEffect(() => {
     if (lastDetection && lastDetection.length > 0) {
       setProcessingStatus("complete");
-      
       // Reset to processing after 2 seconds to simulate continuous processing
       const timer = setTimeout(() => {
         if (isRecognizing) {
           setProcessingStatus("processing");
         }
       }, 2000);
-      
       return () => clearTimeout(timer);
     }
   }, [lastDetection, isRecognizing]);
-  
+
   // Count of unauthorized faces in last detection
   const unauthorizedCount = lastDetection?.filter(
     face => face.matchedPerson && !face.matchedPerson.isAuthorized
   ).length || 0;
-  
+
   // Count of authorized faces in last detection
   const authorizedCount = lastDetection?.filter(
     face => face.matchedPerson && face.matchedPerson.isAuthorized
   ).length || 0;
-  
+
   // Count of unrecognized faces
   const unrecognizedCount = lastDetection?.filter(
     face => !face.matchedPerson
@@ -175,7 +178,7 @@ export function FacialRecognition() {
             
             <div className="max-h-[200px] overflow-y-auto space-y-2">
               {lastDetection.map((detection, index) => (
-                <div key={detection.id || index} className="border rounded-md p-2 text-sm flex items-center">
+                <div key={detection.id || index} className={`border rounded-md p-2 text-sm flex items-center ${detection.matchedPerson && !detection.matchedPerson.isAuthorized ? 'border-red-400 bg-red-50/40' : ''}`}>
                   {detection.matchedPerson ? (
                     <>
                       {detection.matchedPerson.isAuthorized ? (
@@ -186,7 +189,7 @@ export function FacialRecognition() {
                       <div>
                         <p className="font-medium">{detection.matchedPerson.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {detection.matchedPerson.isAuthorized ? 'Authorized' : 'Unauthorized'} 
+                          {detection.matchedPerson.isAuthorized ? 'Authorized' : 'Unauthorized'}
                           {detection.matchedPerson.role && ` • ${detection.matchedPerson.role}`}
                           {detection.matchedPerson.ticketId && ` • Ticket: ${detection.matchedPerson.ticketId}`}
                         </p>
@@ -198,7 +201,7 @@ export function FacialRecognition() {
                       <div>
                         <p className="font-medium">Unrecognized Person</p>
                         <p className="text-xs text-muted-foreground">
-                          Confidence: {Math.round(detection.confidence * 100)}%
+                          Confidence: {Math.round((detection.confidence || 0) * 100)}%
                         </p>
                       </div>
                     </>
@@ -232,4 +235,4 @@ export function FacialRecognition() {
       </CardFooter>
     </Card>
   );
-} 
+}

@@ -247,56 +247,113 @@ export function TrainScene() {
       scene.add(sleeper);
     }
 
-    // Add simpler platform
-    const platformGeometry = new THREE.BoxGeometry(5, 0.8, 12);
+    // Add realistic station in front of the train
+    // Move platform in front of the engine (first coach)
+    const stationZ = -28; // In front of the first coach at z = -21
+    const platformGeometry = new THREE.BoxGeometry(8, 0.8, 16);
     const platformMaterial = new THREE.MeshStandardMaterial({
       color: 0xaaaaaa,
       roughness: 0.8,
       metalness: 0.1
     });
     const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-    platform.position.set(-4, 0.4, -12);
+    platform.position.set(0, 0.4, stationZ);
     if (!performanceMode) {
       platform.receiveShadow = true;
       platform.castShadow = true;
     }
     scene.add(platform);
 
-    // Only add detailed platform if not in performance mode
-    if (!performanceMode) {
-      // Add platform roof
-      const roofGeometry = new THREE.BoxGeometry(5, 0.1, 12);
-      const roofMaterial = new THREE.MeshStandardMaterial({
-        color: 0x333333,
-        roughness: 0.5,
-        metalness: 0.3
-      });
-      const platformRoof = new THREE.Mesh(roofGeometry, roofMaterial);
-      platformRoof.position.set(-4, 3, -12);
-      platformRoof.receiveShadow = true;
-      platformRoof.castShadow = true;
-      scene.add(platformRoof);
+    // Add platform roof
+    const roofGeometry = new THREE.BoxGeometry(8, 0.15, 16);
+    const roofMaterial = new THREE.MeshStandardMaterial({
+      color: 0x333333,
+      roughness: 0.5,
+      metalness: 0.3
+    });
+    const platformRoof = new THREE.Mesh(roofGeometry, roofMaterial);
+    platformRoof.position.set(0, 3, stationZ);
+    platformRoof.receiveShadow = true;
+    platformRoof.castShadow = true;
+    scene.add(platformRoof);
 
-      // Add fewer platform supports
-      const supportGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2.6, 8); // Reduced segments
-      const supportMaterial = new THREE.MeshStandardMaterial({
-        color: 0x555555,
-        roughness: 0.5,
-        metalness: 0.7
-      });
+    // Add platform supports
+    const supportGeometry = new THREE.CylinderGeometry(0.13, 0.13, 2.7, 10);
+    const supportMaterial = new THREE.MeshStandardMaterial({
+      color: 0x555555,
+      roughness: 0.5,
+      metalness: 0.7
+    });
+    for (let x = -3; x <= 3; x += 3) {
+      for (let z = stationZ - 6; z <= stationZ + 6; z += 6) {
+        const support = new THREE.Mesh(supportGeometry, supportMaterial);
+        support.position.set(x, 1.7, z);
+        support.receiveShadow = true;
+        support.castShadow = true;
+        scene.add(support);
+      }
+    }
 
-      for (let z = -17; z <= -7; z += 10) { // Increased spacing
-        const support1 = new THREE.Mesh(supportGeometry, supportMaterial);
-        support1.position.set(-6, 1.7, z);
-        support1.receiveShadow = true;
-        support1.castShadow = true;
-        scene.add(support1);
+    // Add benches on the platform
+    const benchGeometry = new THREE.BoxGeometry(1.2, 0.15, 0.4);
+    const benchMaterial = new THREE.MeshStandardMaterial({
+      color: 0x7d5a3a,
+      roughness: 0.7
+    });
+    for (let i = -2; i <= 2; i += 2) {
+      const bench = new THREE.Mesh(benchGeometry, benchMaterial);
+      bench.position.set(-2, 0.6, stationZ + i * 2);
+      scene.add(bench);
+      const bench2 = new THREE.Mesh(benchGeometry, benchMaterial);
+      bench2.position.set(2, 0.6, stationZ + i * 2);
+      scene.add(bench2);
+    }
 
-        const support2 = new THREE.Mesh(supportGeometry, supportMaterial);
-        support2.position.set(-2, 1.7, z);
-        support2.receiveShadow = true;
-        support2.castShadow = true;
-        scene.add(support2);
+    // Add station sign
+    const signPostGeometry = new THREE.BoxGeometry(0.1, 1.2, 0.1);
+    const signBoardGeometry = new THREE.BoxGeometry(2.5, 0.4, 0.1);
+    const signPostMaterial = new THREE.MeshStandardMaterial({ color: 0x444444 });
+    const signBoardMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const signPost1 = new THREE.Mesh(signPostGeometry, signPostMaterial);
+    signPost1.position.set(-1, 1.2, stationZ - 7.5);
+    scene.add(signPost1);
+    const signPost2 = new THREE.Mesh(signPostGeometry, signPostMaterial);
+    signPost2.position.set(1, 1.2, stationZ - 7.5);
+    scene.add(signPost2);
+    const signBoard = new THREE.Mesh(signBoardGeometry, signBoardMaterial);
+    signBoard.position.set(0, 1.7, stationZ - 7.5);
+    scene.add(signBoard);
+    // Add text to station sign (using CSS2DObject for simplicity)
+    const signDiv = document.createElement('div');
+    signDiv.textContent = 'Central Station';
+    signDiv.style.background = 'rgba(255,255,255,0.95)';
+    signDiv.style.color = '#222';
+    signDiv.style.fontWeight = 'bold';
+    signDiv.style.fontSize = '20px';
+    signDiv.style.padding = '2px 12px';
+    signDiv.style.borderRadius = '4px';
+    signDiv.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+    const signLabel = new CSS2DObject(signDiv);
+    signLabel.position.set(0, 1.9, stationZ - 7.5);
+    scene.add(signLabel);
+
+    // Add lamps for realism
+    const lampPostGeometry = new THREE.CylinderGeometry(0.08, 0.1, 3, 8);
+    const lampHeadGeometry = new THREE.SphereGeometry(0.18, 10, 10);
+    const lampPostMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
+    const lampHeadMaterial = new THREE.MeshStandardMaterial({ color: 0xffffcc, emissive: 0xffffcc, emissiveIntensity: 1.5 });
+    for (let x of [-3.5, 3.5]) {
+      for (let z of [stationZ - 5, stationZ + 5]) {
+        const lampPost = new THREE.Mesh(lampPostGeometry, lampPostMaterial);
+        lampPost.position.set(x, 2, z);
+        scene.add(lampPost);
+        const lampHead = new THREE.Mesh(lampHeadGeometry, lampHeadMaterial);
+        lampHead.position.set(x, 3.5, z);
+        scene.add(lampHead);
+        // Add actual light
+        const lampLight = new THREE.PointLight(0xffffcc, 0.7, 8);
+        lampLight.position.set(x, 3.5, z);
+        scene.add(lampLight);
       }
     }
 
