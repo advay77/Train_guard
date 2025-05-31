@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Card, 
@@ -23,6 +22,7 @@ import {
   Shield, 
   UserX 
 } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 // Mock security logs data
 const mockSecurityLogs = [
@@ -172,7 +172,22 @@ export function LogsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterSeverity, setFilterSeverity] = useState("all");
-  
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Auto-filter if coming from dashboard with ?filter=unauthorized_access
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const filter = params.get("filter");
+    if (filter) setFilterType(filter);
+  }, [location.search]);
+
+  // Summary counts
+  const totalLogs = mockSecurityLogs.length;
+  const unauthorizedCount = mockSecurityLogs.filter(l => l.type === "unauthorized_access").length;
+  const suspiciousCount = mockSecurityLogs.filter(l => l.type === "suspicious_activity").length;
+  const idMismatchCount = mockSecurityLogs.filter(l => l.type === "id_mismatch").length;
+
   // Filter security logs based on search and filters
   const filteredSecurityLogs = mockSecurityLogs.filter(log => {
     // Search filter
@@ -233,12 +248,39 @@ export function LogsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Security Logs</h1>
-        <p className="text-muted-foreground">
-          Review security incidents and access logs
-        </p>
+    <div className="space-y-6 px-2 sm:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 bg-clip-text text-transparent drop-shadow-lg">
+            Security Logs
+          </h1>
+          <p className="text-muted-foreground text-base font-medium">
+            Review security incidents and access logs
+          </p>
+        </div>
+        <Button onClick={() => navigate("/SecurityDashboard")}
+          className="bg-blue-700 text-white font-semibold shadow hover:bg-blue-800 transition-all flex items-center gap-2 px-4 py-2 rounded-lg">
+          Back to Dashboard
+        </Button>
+      </div>
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/20 rounded-xl shadow p-4 flex flex-col items-center">
+          <span className="text-lg font-bold text-blue-800">{totalLogs}</span>
+          <span className="text-xs text-blue-900/80">Total Logs</span>
+        </div>
+        <div className="bg-gradient-to-br from-red-900/20 to-blue-800/20 rounded-xl shadow p-4 flex flex-col items-center">
+          <span className="text-lg font-bold text-red-700">{unauthorizedCount}</span>
+          <span className="text-xs text-red-900/80">Unauthorized</span>
+        </div>
+        <div className="bg-gradient-to-br from-yellow-900/20 to-blue-800/20 rounded-xl shadow p-4 flex flex-col items-center">
+          <span className="text-lg font-bold text-yellow-600">{idMismatchCount}</span>
+          <span className="text-xs text-yellow-900/80">ID Mismatch</span>
+        </div>
+        <div className="bg-gradient-to-br from-green-900/20 to-blue-800/20 rounded-xl shadow p-4 flex flex-col items-center">
+          <span className="text-lg font-bold text-green-700">{suspiciousCount}</span>
+          <span className="text-xs text-green-900/80">Suspicious</span>
+        </div>
       </div>
       
       <Card className="bg-card/70">
@@ -332,7 +374,7 @@ export function LogsPage() {
                         filteredSecurityLogs.map(log => (
                           <tr
                             key={log.id}
-                            className="border-b transition-colors hover:bg-secondary/20"
+                            className={`border-b transition-colors hover:bg-blue-900/10 ${filterType === 'unauthorized_access' && log.type === 'unauthorized_access' ? 'bg-red-900/10 font-bold' : ''}`}
                           >
                             <td className="p-4 align-middle">
                               <div className="flex flex-col">
