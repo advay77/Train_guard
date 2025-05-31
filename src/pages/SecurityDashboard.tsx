@@ -29,6 +29,9 @@ export function SecurityDashboard() {
           </div>
         </div>
         <div className="flex gap-2">
+          <a href="/dashboard#facial-recognition" className="px-4 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow hover:bg-gray-800 transition-all flex items-center gap-2">
+            Back to Dashboard
+          </a>
           <a href="/logs?filter=unauthorized_access" className="px-4 py-2 rounded-lg bg-blue-700 text-white font-semibold shadow hover:bg-blue-800 transition-all flex items-center gap-2">
             <Camera className="h-4 w-4" />
             View Logs
