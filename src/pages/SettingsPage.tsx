@@ -23,9 +23,15 @@ import {
   Smartphone, 
   User 
 } from "lucide-react";
+import { updateUserProfile, changeUserPassword } from "@/services/userApiService";
 
 export function SettingsPage() {
   const { user } = useAuth();
+  const [accountData, setAccountData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: ""
+  });
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -48,6 +54,11 @@ export function SettingsPage() {
     activityLogs: true
   });
   
+  const handleAccountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setAccountData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswordData(prev => ({ ...prev, [name]: value }));
@@ -61,24 +72,36 @@ export function SettingsPage() {
     }
   };
   
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    try {
+      await updateUserProfile(accountData);
+      toast.success("Account information updated!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update profile");
+    }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("New passwords don't match");
       return;
     }
-    
-    // In a real app, send this to your API
-    console.log("Changing password:", passwordData);
-    toast.success("Password updated successfully");
-    
-    // Reset form
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: ""
-    });
+    try {
+      await changeUserPassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      toast.success("Password updated successfully");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update password");
+    }
   };
   
   const handleNotificationSave = () => {
@@ -150,17 +173,21 @@ export function SettingsPage() {
                 Update your personal information and contact details
               </CardDescription>
             </CardHeader>
-            <form onSubmit={e => { e.preventDefault(); toast.success('Account information updated!'); }}>
+            <form onSubmit={handleAccountSubmit}>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="username">Name</Label>
-                    <Input id="username" name="username" defaultValue={user?.name} required autoComplete="name" />
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" name="name" value={accountData.name} onChange={handleAccountChange} required autoComplete="name" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" defaultValue={user?.email} required autoComplete="email" />
+                    <Input id="email" name="email" type="email" value={accountData.email} onChange={handleAccountChange} required autoComplete="email" />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input id="phone" name="phone" value={accountData.phone} onChange={handleAccountChange} required autoComplete="tel" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Account Type</Label>
