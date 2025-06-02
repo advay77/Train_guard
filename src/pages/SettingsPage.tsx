@@ -26,11 +26,23 @@ import {
 import { updateUserProfile, changeUserPassword } from "@/services/userApiService";
 
 export function SettingsPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  // Patch: allow phone to be stored in local state, fallback to localStorage if not in user
+  const initialPhone = (() => {
+    if (user && typeof (user as any).phone === 'string') return (user as any).phone;
+    const savedUser = localStorage.getItem("trainSecurityUser");
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.phone) return parsed.phone;
+      } catch {}
+    }
+    return "";
+  })();
   const [accountData, setAccountData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: ""
+    phone: initialPhone
   });
   
   const [passwordData, setPasswordData] = useState({
@@ -74,11 +86,32 @@ export function SettingsPage() {
   
   const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!accountData.name || !accountData.email || !accountData.phone) {
+      toast.error("Please fill all fields");
+      return;
+    }
     try {
-      await updateUserProfile(accountData);
-      toast.success("Account information updated!");
+      const updatedUser = await updateUserProfile(accountData);
+      if (typeof updatedUser === 'object' && updatedUser !== null) {
+        const { name, email, phone } = updatedUser as { name: string; email: string; phone: string };
+        const newUser = {
+          ...user,
+          name,
+          email,
+          phone
+        };
+        localStorage.setItem("trainSecurityUser", JSON.stringify(newUser));
+        setAccountData({ name, email, phone });
+        toast.success("Account information updated!");
+      } else {
+        toast.error("Unexpected response from server");
+      }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to update profile");
+      if (err?.response?.data?.errors) {
+        toast.error(err.response.data.errors.map((e: any) => e.msg).join(', '));
+      } else {
+        toast.error(err?.response?.data?.message || "Failed to update profile");
+      }
     }
   };
 
