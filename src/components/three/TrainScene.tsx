@@ -1413,6 +1413,53 @@ export function TrainScene() {
           </div>
         )}
       </div>
+      
+      {/* 3D Scene Controls: Camera, Zoom, Reset */}
+      <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-2 items-end">
+        <button
+          aria-label="Reset Camera View"
+          title="Reset Camera View"
+          className="bg-white/80 hover:bg-blue-200 text-blue-900 rounded-full shadow p-2 mb-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          tabIndex={0}
+          onClick={() => {
+            setCameraRotation({ x: 0, y: 0 });
+            if (cameraRef.current) cameraRef.current.position.z = 15;
+          }}
+        >
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-refresh-cw"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.36 5.36A9 9 0 0020.49 15"/></svg>
+        </button>
+        <button
+          aria-label="Zoom In"
+          title="Zoom In"
+          className="bg-white/80 hover:bg-blue-200 text-blue-900 rounded-full shadow p-2 mb-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          tabIndex={0}
+          onClick={() => {
+            if (cameraRef.current) cameraRef.current.position.z = Math.max(5, cameraRef.current.position.z - 1);
+          }}
+        >
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-zoom-in"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <button
+          aria-label="Zoom Out"
+          title="Zoom Out"
+          className="bg-white/80 hover:bg-blue-200 text-blue-900 rounded-full shadow p-2 mb-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          tabIndex={0}
+          onClick={() => {
+            if (cameraRef.current) cameraRef.current.position.z = Math.min(20, cameraRef.current.position.z + 1);
+          }}
+        >
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-zoom-out"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <button
+          aria-label="Toggle Auto-Rotate"
+          title="Toggle Auto-Rotate"
+          className={`bg-white/80 hover:bg-blue-200 text-blue-900 rounded-full shadow p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${autoRotate ? 'ring-2 ring-blue-500' : ''}`}
+          tabIndex={0}
+          onClick={() => setAutoRotate(!autoRotate)}
+        >
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-rotate-cw"><polyline points="23 4 23 10 17 10"/><path d="M1 10a9 9 0 0 1 17.32-4"/></svg>
+        </button>
+      </div>
     </div>
   );
 }
