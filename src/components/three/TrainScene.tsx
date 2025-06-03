@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import { CSS2DRenderer, CSS2DObject } from 'three-stdlib';
 import { getAllCoachesData, CoachData } from "@/services/coachDataService";
+import gsap from "gsap";
 
 export function TrainScene() {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -1422,8 +1423,22 @@ export function TrainScene() {
           className="bg-white/80 hover:bg-blue-200 text-blue-900 rounded-full shadow p-2 mb-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
           tabIndex={0}
           onClick={() => {
-            setCameraRotation({ x: 0, y: 0 });
-            if (cameraRef.current) cameraRef.current.position.z = 15;
+            // Animate camera rotation smoothly
+            gsap.to(cameraRotation, {
+              x: 0,
+              y: 0,
+              duration: 0.8,
+              onUpdate: () => setCameraRotation({ ...cameraRotation }),
+              overwrite: "auto"
+            });
+            // Animate camera position (z) smoothly
+            if (cameraRef.current) {
+              gsap.to(cameraRef.current.position, {
+                z: 15,
+                duration: 0.8,
+                overwrite: "auto"
+              });
+            }
           }}
         >
           <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-refresh-cw"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.13-3.36L23 10M1 14l5.36 5.36A9 9 0 0020.49 15"/></svg>
