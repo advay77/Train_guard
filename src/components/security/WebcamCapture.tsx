@@ -44,14 +44,15 @@ export function WebcamCapture({
   const handleDevices = useCallback((mediaDevices: MediaDeviceInfo[]) => {
     const videoDevices = mediaDevices.filter(({ kind }) => kind === 'videoinput');
     setAvailableDevices(videoDevices);
-    // Set the first available camera as default if not already set
-    if (videoDevices.length > 0 && !selectedDeviceId) {
+    // Always set the first available camera if none is selected or if the selected device is not available
+    if (videoDevices.length > 0 && (!selectedDeviceId || !videoDevices.some(d => d.deviceId === selectedDeviceId))) {
       setSelectedDeviceId(videoDevices[0].deviceId);
     }
   }, [selectedDeviceId]);
 
   // Initialize camera and get devices
   useEffect(() => {
+    setCameraError(false); // Reset error before trying
     navigator.mediaDevices.enumerateDevices()
       .then(handleDevices)
       .catch(error => {
@@ -64,6 +65,7 @@ export function WebcamCapture({
   // Reset error when switching device
   useEffect(() => {
     setCameraError(false);
+    setWebcamReady(false); // Reset webcam ready state on device change
   }, [selectedDeviceId]);
 
   // Mark webcam as ready when video stream is available
