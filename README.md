@@ -1,77 +1,81 @@
 <h1 align="center">🚆 LOCOFY</h1>
-<p align="center">
-  <b>Smart Facial Recognition System for Indian Railways</b><br/>
-  A scalable tech-powered solution to stop ticketless travel and enforce real-time TTE transparency.
+<p align="center"><b>
+Smart Facial Recognition System for Indian Railways
+</b><br/>
+A scalable, tech-powered solution to eliminate ticketless travel and bring real-time TTE accountability.
 </p>
 
 ---
 
 ## 🧠 Problem Statement
 
-> More than 50% of train travelers in India board without valid tickets, causing daily revenue loss of ₹1 crore+.  
-Manual ticket checking is slow, outdated, and vulnerable to manipulation.
+> Over 50% of Indian train passengers board without valid tickets, leading to daily losses of ₹1 crore+.  
+Manual ticket checking is slow, outdated, and prone to manipulation.
 
 ---
 
-## 💡 Our Solution
+## 💡 Solution Overview
 
-LOCOFY ensures secure and verified travel with the help of facial recognition and intelligent monitoring:
+**LOCOFY** leverages facial recognition and intelligent monitoring to ensure secure, verified, and transparent train travel:
 
-- 🎟️ **Face Capture at Booking** – Webcam/mobile scan or upload by real passenger  
-- 🧾 **Match at Boarding** – Real-time verification with IRCTC database  
-- 🚨 **Unauthorized Alerts** – System flags mismatches instantly  
-- 🧭 **Live TTE Map** – Tracks TTE actions + unauthorized movement with location  
-- 🛡️ **Logs Every Action** – Creates transparency & accountability  
+- 🎟️ <strong>Face Capture at Booking</strong>: Passengers scan/upload their face through webcam or mobile.
+- 🧾 <strong>Match at Boarding</strong>: Real-time face verification with IRCTC ticket database.
+- 🚨 <strong>Unauthorized Alerts</strong>: Instant system flag for mismatches.
+- 🧭 <strong>Live TTE Map</strong>: Tracks TTE actions and unauthorized movements with live location.
+- 🛡️ <strong>Action Logs</strong>: Every step is logged for transparency & accountability.
 
 ---
 
 ## 🔧 Tech Stack
 
-| 💻 Category       | ⚙️ Tools Used                     |
-|------------------|----------------------------------|
-| ML Model         | ResNet (Face Detection)          |
-| Frontend         | TypeScript, TailwindCSS          |
-| Backend          | JavaScript, Postman,             |
-| Interface        | Streamlit                        |
-| Database Sync    | IRCTC Ticket API (Mock)          |
-| Mapping System   | Leaflet / Google Maps            |
+| Category         | Tools / Frameworks                      |
+|------------------|:----------------------------------------|
+| ML Model         | ResNet (Face Detection via face-api.js) |
+| Frontend         | TypeScript, React, TailwindCSS          |
+| Backend          | Node.js, Express, JavaScript            |
+| Interface        | Streamlit (Demo/POC)                    |
+| Database         | MongoDB                                 |
+| API Integration  | IRCTC Ticket API (Mock)                 |
+| Mapping          | Leaflet, Google Maps                    |
+| Testing & API    | Postman                                 |
 
 ---
 
-## 📈 Revenue Model
+## 🌐 Deployed Live Demo
 
-- 💰 ₹5L/month/zone × 17 zones = ₹85L/month  
-- 🔍 Just 850 catches/day = ₹8.5L saved daily  
-- 📊 Additional income: SaaS for dashboard, analytics, AMC  
+- **Dashboard:** [LOCOFY Dashboard (Vercel)](https://train-guard.vercel.app/)
+- For demo credentials or access, see instructions below.
 
 ---
 
-## 🚀 How to Run the Project
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (version 16 or higher recommended)
-- npm (comes with Node.js) or yarn
-- For backend: MongoDB (running locally or connection string for remote DB)
 
-### 1. Clone the repository
-```bash
+- Node.js (v16+ recommended)
+- npm (included with Node.js) or yarn
+- MongoDB (local instance or remote connection string)
+
+### 1. Clone the Repository
+
+```sh
 git clone https://github.com/advay77/Train_guard.git
 cd Train_guard
 ```
 
----
-
-### 2. Install dependencies
+### 2. Install Dependencies
 
 #### Frontend
-```bash
+
+```sh
 npm install
 # or
 yarn
 ```
 
 #### Backend
-```bash
+
+```sh
 cd backend
 npm install
 # or
@@ -79,44 +83,42 @@ yarn
 cd ..
 ```
 
----
-
 ### 3. Download Face-API.js Models
-The face recognition system requires pre-trained models.
 
-**Option 1: Run the provided script**
-```bash
-npm run download-models
+LOCOFY uses pre-trained models for facial recognition.
+
+- **Option 1:** Run the script:
+    ```sh
+    npm run download-models
+    ```
+- **Option 2:** Manually download models.  
+  See [`public/models/README.md`](public/models/README.md) for detailed instructions.
+
+### 4. Configure Environment Variables
+
+Create a `.env` file in the `backend/` folder:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/your-db
+JWT_SECRET=your-secret
 ```
-_Or manually:_
-See `public/models/README.md` for full instructions to download and place models in `public/models`.
 
----
+### 5. Run the Project
 
-### 4. Set up Environment Variables
+#### Start Backend
 
-- Backend may need a `.env` file in `backend/` for database connection and secrets.
-- Example:
-  ```
-  MONGODB_URI=mongodb://localhost:27017/your-db
-  JWT_SECRET=your-secret
-  ```
-
----
-
-### 5. Start the Applications
-
-#### Backend
-```bash
+```sh
 cd backend
 npm run dev
 # or
 yarn dev
 ```
 
-#### Frontend
-Open a new terminal in the root directory:
-```bash
+#### Start Frontend
+
+In a new terminal at the root:
+
+```sh
 npm run dev
 # or
 yarn dev
@@ -124,31 +126,29 @@ yarn dev
 
 ---
 
+## 📸 Screenshots & Demo Features
 
-## 🔮 Future Expansion
+- 🎯 **Live Demo:** [LOCOFY Dashboard on Vercel](https://train-guard.vercel.app/)
+- 📌 Map-based Unauthorized Flagging
+- 📌 Real-Time TTE Tracking
+- 📌 Dashboard Alert Popups
 
-- 🚇 Metro systems  
-- 🚌 Bus transport  
-- ✈️ Airport check-ins  
-- 📱 Mobile-based face alerts for on-field TTEs  
-
----
-
-## 📷 Screenshots & Demo
-
-🎯 Live Prototype: [LOCOFY Dashboard (Vercel)](https://train-guide-delta.vercel.app/)  
-📌 Map-based Unauthorized Flagging  
-📌 Real-Time TTE Tracking  
-📌 Dashboard Alert Popups  
-
-(Add screenshots in `/assets/` folder or link images from Netlify)
+_Add screenshots to the `/assets/` folder or link to hosted images._
 
 ---
 
-## 👨‍💻 Made With ❤️ by
+## 📈 Revenue & Impact Model
+
+- ₹5L/month/zone × 17 zones = ₹85L/month
+- 850 catches/day = ₹8.5L saved daily
+- Extra: SaaS dashboard, analytics, AMC
+
+---
+
+## 👨‍💻 Made By
 
 **Advay Anand**  
-[GitHub](https://github.com/advayanand) | [LinkedIn](https://www.linkedin.com/in/advayanand)  
+[GitHub](https://github.com/advayanand) | [LinkedIn](https://www.linkedin.com/in/advay-anand-a89024277/)  
 _Solo Developer • Builder • Problem Solver_
 
 ---
@@ -158,8 +158,3 @@ _Solo Developer • Builder • Problem Solver_
 Licensed under the MIT License.
 
 ---
-
-## ⚠️ Disclaimer
-
-This is a prototype project.  
-IRCTC APIs used are for mock/demo purposes and are not official or affiliated.
